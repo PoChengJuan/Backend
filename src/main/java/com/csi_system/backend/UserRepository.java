@@ -14,4 +14,8 @@ public interface UserRepository extends JpaRepository<User,Integer> {
 	Iterable<User> getMember(String name, String password);
 	//@Query(value="select * from ShopInfo where Owner like ?1",nativeQuery = true)
 	//List<ShopInfo> aaa(String name);
+	@Query(value="select LastUpLoad,isUpLoad form UserDb where Name like ?1 and Shopname like ?2",nativeQuery = true)
+	String getLastUpLoad(String name, String Shopname);
+	@Query(value="update UserDB set LastUpLoad = ?1, isUpLoad = ?2 where Name like ?3 and Shopname like ?4 and Branch like ?5", nativeQuery = true)
+	String setLastUpload(String lastupload, Boolean isupload, String name, String shopname, String branch);
 }

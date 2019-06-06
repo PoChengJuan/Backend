@@ -33,5 +33,8 @@ public class ShopInfoController {
 		return shopInfoRepository.getMenu(shopname, branch);
 	}
 	
-	
+	@GetMapping(path="getBranch")
+	public @ResponseBody Iterable<String> getBranch(@RequestParam String shopname) {
+		return shopInfoRepository.getBranch(shopname);
+	}
 }
