@@ -36,6 +36,10 @@ public class User {
 	@Column(name="branch")
 	private String branch;
 	
+	@Column(name="lastupload")
+	private String lastupload;
+	
+	
 	public int getAuto_increment() {
 		return auto_increment;
 	}
@@ -83,6 +87,18 @@ public class User {
 	public void setBranch(String branch) {
 		this.branch = branch;
 	}
+
+	public String getLastupload() {
+		return lastupload;
+	}
+
+	public void setLastupload(String lastupload) {
+		this.lastupload = lastupload;
+	}
+
+
+
+	
 	
 	
 	

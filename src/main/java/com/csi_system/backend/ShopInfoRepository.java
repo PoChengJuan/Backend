@@ -19,6 +19,6 @@ public interface ShopInfoRepository extends JpaRepository<ShopInfo, Integer>{
 	@Query(value="select StockItem from shopInfo where ShopName like ?1 and Branch like ?2",nativeQuery = true)
 	String getMenu(String shopname, String branch);
 
-	@Query(value="select Branch from shopInfo where ShopName like ?1",nativeQuery = true)
+	@Query(value="select AUTO_INCREMENT,Branch from shopInfo where ShopName like ?1",nativeQuery = true)
 	Iterable<String> getBranch(String shopname);
 }

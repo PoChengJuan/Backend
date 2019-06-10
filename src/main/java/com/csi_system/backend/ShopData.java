@@ -18,20 +18,26 @@ public class ShopData {
     @GeneratedValue(strategy=GenerationType.AUTO)
 	private int auto_increment;
 	
-	@Column(name="name")
-	private String name;
+	@Column(name="shopname")
+	private String shopname;
 	
 	@Column(name="branch")
 	private String branch;
 	
+	@Column(name="name")
+	private String name;
+	
 	@Column(name="date")
 	private String date;
+	
+	@Column(name="time")
+	private String time;
 	
 	@Column(name="stock")
 	private String stock;
 	
 	@Column(name="expense")
-	private int expense;
+	private String expense;
 	
 	@Column(name="income")
 	private int income;
@@ -44,12 +50,12 @@ public class ShopData {
 		this.auto_increment = auto_increment;
 	}
 
-	public String getName() {
-		return name;
+	public String getShopname() {
+		return shopname;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setShopname(String shopname) {
+		this.shopname = shopname;
 	}
 
 	public String getBranch() {
@@ -60,12 +66,28 @@ public class ShopData {
 		this.branch = branch;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public String getDate() {
 		return date;
 	}
 
 	public void setDate(String date) {
 		this.date = date;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
 	}
 
 	public String getStock() {
@@ -76,11 +98,11 @@ public class ShopData {
 		this.stock = stock;
 	}
 
-	public int getExpense() {
+	public String getExpense() {
 		return expense;
 	}
 
-	public void setExpense(int expense) {
+	public void setExpense(String expense) {
 		this.expense = expense;
 	}
 
