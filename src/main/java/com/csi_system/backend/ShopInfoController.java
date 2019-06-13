@@ -1,5 +1,6 @@
 package com.csi_system.backend;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -34,7 +35,22 @@ public class ShopInfoController {
 	}
 	
 	@GetMapping(path="getBranch")
-	public @ResponseBody Iterable<String> getBranch(@RequestParam String shopname) {
-		return shopInfoRepository.getBranch(shopname);
+	public @ResponseBody String getBranch(@RequestParam String shopname) {
+		StringBuffer output = new StringBuffer();
+		output.append("<Menu>");
+		Iterator iterator_Branch = shopInfoRepository.getBranch(shopname).iterator();
+		Iterator iterator_Id = shopInfoRepository.getId(shopname).iterator();
+
+		while(iterator_Id.hasNext()) {
+			output.append("<Menu.Item key='");
+			output.append(iterator_Id.next().toString());
+			output.append("'>");
+			output.append(iterator_Branch.next().toString());
+			output.append("</ Menu.Item>");
+		}
+		output.append("</Menu>");
+
+		//return shopInfoRepository.getBranch(shopname);
+		return output.toString();
 	}
 }
