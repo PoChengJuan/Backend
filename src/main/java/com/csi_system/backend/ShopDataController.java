@@ -76,7 +76,7 @@ public class ShopDataController {
 	public @ResponseBody Date getLastUploadDate(@RequestParam String shop,@RequestParam String branch) {
 		return shopDataRepository.getLastUploadDate(shop, branch);
 	}
-	@GetMapping(path="getIncomeData")
+	@GetMapping(path="getRangeData")
 	public @ResponseBody String getIncomeData(@RequestParam String shopname,@RequestParam String branch,
 			@RequestParam String start,@RequestParam String end){
 		//System.out.print(shopDataRepository.getIncomeData(shopname, branch, start, end));
@@ -88,16 +88,29 @@ public class ShopDataController {
 		JSONArray Array = new JSONArray();
 		JSONObject Object = new JSONObject();
 		
+		JSONArray Array_Expense = shopDataRepository.getExpenseData(shopname, branch, start, end);
+		JSONArray Array_Expense_2 = new JSONArray();
+		JSONObject Object_OrderExpense = new JSONObject();
+		JSONObject Object_OtherExpense = new JSONObject();
 		
-		Iterator iterator_Income = shopDataRepository.getIncomeData(shopname, branch, start, end).iterator();
-		Iterator iterator_Date = shopDataRepository.getIncomeDate(shopname, branch, start, end).iterator();
+		int i = 0;
+
+		Iterator<?> iterator_Income = shopDataRepository.getIncomeData(shopname, branch, start, end).iterator();
+		Iterator<?> iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
 
 		while(iterator_Income.hasNext()) {
 			Object.put("日期", iterator_Date.next().toString());
 			Object.put("營業額", iterator_Income.next().toString());
 
+			Array_Expense_2 = Array_Expense.getJSONArray(i);
+			Object_OrderExpense = Array_Expense_2.getJSONObject(0);
+			Object_OtherExpense = Array_Expense_2.getJSONObject(1);
+			Object.put("進貨支出", Object_OrderExpense.get("cost"));
+			Object.put("雜支", Object_OtherExpense.get("cost"));
+			
 			Array.add(Object);
 			Object.clear();
+			i++;
 			//System.out.print(iterator_Income.next());
 			//System.out.print(iterator_Date.next());
 		}
@@ -105,6 +118,43 @@ public class ShopDataController {
 		//return shopDataRepository.getIncomeData(shopname, branch, start, end);
 		return Array.toString();
 	}
+	/*@GetMapping(path="getExpenseData")
+	public @ResponseBody String getExpenseData(@RequestParam String shopname,@RequestParam String branch,
+			@RequestParam String start,@RequestParam String end){
+		//System.out.print(shopDataRepository.getIncomeData(shopname, branch, start, end));
+        //Iterable<String> strings = shopDataRepository.getIncomeData(shopname, branch, start, end);
+
+		//for(String s:strings) {
+		//	System.out.print(s);
+		//}
+		JSONArray Array = new JSONArray();
+		JSONObject Object = new JSONObject();
+		
+		
+		JSONArray Array_Expense = shopDataRepository.getExpenseData(shopname, branch, start, end);
+		JSONArray Array_Expense_2 = new JSONArray();
+		JSONObject Object_OrderExpense = new JSONObject();
+		JSONObject Object_OtherExpense = new JSONObject();
+
+		Iterator iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
+
+		int i = 0;
+		while(iterator_Date.hasNext()) {
+			Object.put("日期", iterator_Date.next().toString());
+			
+			Array_Expense_2 = Array_Expense.getJSONArray(i);
+			Object_OrderExpense = Array_Expense_2.getJSONObject(0);
+			Object_OtherExpense = Array_Expense_2.getJSONObject(1);
+			Object.put("進貨支出", Object_OrderExpense.get("cost"));
+			Object.put("雜支", Object_OtherExpense.get("cost"));
+			
+			Array.add(Object);
+			Object.clear();
+			i++;
+		}
+		
+		return Array.toString();
+	}*/
 	
 	@RequestMapping(path="add",method = RequestMethod.POST)
 	public @ResponseBody String addStock(

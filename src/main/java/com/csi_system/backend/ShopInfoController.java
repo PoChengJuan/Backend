@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
 @Controller
 @CrossOrigin
 @RequestMapping("/ShopInfo")
@@ -37,7 +40,21 @@ public class ShopInfoController {
 	@GetMapping(path="getBranch")
 	public @ResponseBody String getBranch(@RequestParam String shopname) {
 		StringBuffer output = new StringBuffer();
-		output.append("<Menu>");
+		
+		Iterator<?> Branch_Array = shopInfoRepository.getBranch(shopname).iterator();
+		JSONObject Object = new JSONObject();
+		JSONArray Array = new JSONArray();
+		int i = 1;
+		
+		while(Branch_Array.hasNext()) {
+			Object.accumulate("key", i);
+			Object.accumulate("branch", Branch_Array.next().toString());
+			Array.add(Object);
+			Object.clear();
+			i++;
+		}
+		
+		/*output.append("<Menu>");
 		Iterator iterator_Branch = shopInfoRepository.getBranch(shopname).iterator();
 		Iterator iterator_Id = shopInfoRepository.getId(shopname).iterator();
 
@@ -48,9 +65,9 @@ public class ShopInfoController {
 			output.append(iterator_Branch.next().toString());
 			output.append("</ Menu.Item>");
 		}
-		output.append("</Menu>");
+		output.append("</Menu>");*/
 
 		//return shopInfoRepository.getBranch(shopname);
-		return output.toString();
+		return Array.toString();
 	}
 }
