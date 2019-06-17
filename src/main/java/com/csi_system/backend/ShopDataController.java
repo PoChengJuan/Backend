@@ -25,6 +25,9 @@ public class ShopDataController {
 	@Autowired
 	private ShopDataRepository shopDataRepository;
 	
+	@Autowired
+	private ShopInfoRepository shopInfoRepository;
+	
 	@GetMapping(path="get")
 	public @ResponseBody Iterable<ShopData> getAllUsers() {
 		// This returns a JSON or XML with the users
@@ -77,7 +80,7 @@ public class ShopDataController {
 		return shopDataRepository.getLastUploadDate(shop, branch);
 	}
 	@GetMapping(path="getRangeData")
-	public @ResponseBody String getIncomeData(@RequestParam String shopname,@RequestParam String branch,
+	public @ResponseBody JSONArray getIncomeData(@RequestParam String shopname,@RequestParam String branch,
 			@RequestParam String start,@RequestParam String end){
 		//System.out.print(shopDataRepository.getIncomeData(shopname, branch, start, end));
         //Iterable<String> strings = shopDataRepository.getIncomeData(shopname, branch, start, end);
@@ -99,14 +102,15 @@ public class ShopDataController {
 		Iterator<?> iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
 
 		while(iterator_Income.hasNext()) {
-			Object.put("日期", iterator_Date.next().toString());
-			Object.put("營業額", iterator_Income.next().toString());
+			Object.put("key", i+1);
+			Object.put("Date", iterator_Date.next().toString());
+			Object.put("Turnover", iterator_Income.next().toString());
 
 			Array_Expense_2 = Array_Expense.getJSONArray(i);
 			Object_OrderExpense = Array_Expense_2.getJSONObject(0);
 			Object_OtherExpense = Array_Expense_2.getJSONObject(1);
-			Object.put("進貨支出", Object_OrderExpense.get("cost"));
-			Object.put("雜支", Object_OtherExpense.get("cost"));
+			Object.put("OrderExpense", Object_OrderExpense.get("cost"));
+			Object.put("OtherExpense", Object_OtherExpense.get("cost"));
 			
 			Array.add(Object);
 			Object.clear();
@@ -116,7 +120,7 @@ public class ShopDataController {
 		}
 		
 		//return shopDataRepository.getIncomeData(shopname, branch, start, end);
-		return Array.toString();
+		return Array;
 	}
 	/*@GetMapping(path="getExpenseData")
 	public @ResponseBody String getExpenseData(@RequestParam String shopname,@RequestParam String branch,
@@ -188,6 +192,13 @@ public class ShopDataController {
 		}
 		shopDataRepository.save(n);
 		return "OK";
+	}
+	
+	@GetMapping(path="getROI")
+	public @ResponseBody String getROI(@RequestParam String shopname,@RequestParam String branch,
+			@RequestParam String start,@RequestParam String end) {
+		//營業額 / (累積庫存 * 品項金額) *
+		return null;
 	}
 	
 }
