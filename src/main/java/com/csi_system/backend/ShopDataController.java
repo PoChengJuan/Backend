@@ -103,14 +103,14 @@ public class ShopDataController {
 
 		while(iterator_Income.hasNext()) {
 			Object.put("key", i+1);
-			Object.put("Date", iterator_Date.next().toString());
-			Object.put("Turnover", iterator_Income.next().toString());
+			Object.put("日期", iterator_Date.next().toString());
+			Object.put("營業額", iterator_Income.next().toString());
 
 			Array_Expense_2 = Array_Expense.getJSONArray(i);
 			Object_OrderExpense = Array_Expense_2.getJSONObject(0);
 			Object_OtherExpense = Array_Expense_2.getJSONObject(1);
-			Object.put("OrderExpense", Object_OrderExpense.get("cost"));
-			Object.put("OtherExpense", Object_OtherExpense.get("cost"));
+			Object.put("進貨支出", Object_OrderExpense.get("cost"));
+			Object.put("雜支", Object_OtherExpense.get("cost"));
 			
 			Array.add(Object);
 			Object.clear();
@@ -193,12 +193,75 @@ public class ShopDataController {
 		shopDataRepository.save(n);
 		return "OK";
 	}
+	@GetMapping(path="getStockItem")
+	public @ResponseBody JSONArray getStockItem(@RequestParam String shopname,@RequestParam String branch) {
+		JSONArray Array = new JSONArray();
+		JSONObject Object = new JSONObject();
+		JSONArray item_Data = shopDataRepository.getStockItem(shopname, branch);
+		JSONArray item_Array = new JSONArray();
+		item_Array = item_Data.getJSONArray(0);
+		Iterator<?> item_iterator = item_Array.iterator();
+		JSONObject item_Object = new JSONObject();
+		int i = 1;
+		Object.accumulate("key", i);
+		Object.accumulate("title", "-");
+		Array.add(Object);
+		Object.clear();
+		i++;
+		while(item_iterator.hasNext()) {
+			
+			item_Object = (JSONObject) item_iterator.next();
+			Object.accumulate("key", i);
+			Object.accumulate("title", item_Object.get("title"));
+			Array.add(Object);
+			Object.clear();
+			i++;
+		}
+		return Array;
+		//return shopDataRepository.getStockItem(shop, branch);
+	}
 	
-	@GetMapping(path="getROI")
-	public @ResponseBody String getROI(@RequestParam String shopname,@RequestParam String branch,
+	@GetMapping(path="getRangeStock")
+	public @ResponseBody JSONArray getRangeStock(@RequestParam String shopname,@RequestParam String branch,
 			@RequestParam String start,@RequestParam String end) {
-		//營業額 / (累積庫存 * 品項金額) *
-		return null;
+		JSONArray Array = new JSONArray();
+		JSONObject Object = new JSONObject();
+		
+		JSONArray Array_Stock = shopDataRepository.getStockData(shopname, branch, start, end);
+		JSONArray Array_Stock_2 = new JSONArray();
+		JSONObject item_Object = new JSONObject();
+		JSONObject Output_Object = new JSONObject();
+		
+		int i = 0;
+
+		Iterator<?> iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
+
+		while(iterator_Date.hasNext()) {
+			Object.put("key", i+1);
+			Object.put("Date", iterator_Date.next().toString());
+			Array_Stock_2 = Array_Stock.getJSONArray(i);
+			Iterator<?> Stock_Data = Array_Stock_2.iterator();
+			while(Stock_Data.hasNext()) {
+				item_Object = (JSONObject) Stock_Data.next();
+				Object.put(item_Object.get("title"), item_Object.get("stock"));
+			}
+			item_Object = Array_Stock_2.getJSONObject(i);
+			//Array_Stock_2 = Array_Stock.getJSONArray(i);
+			//Object_OrderExpense = Array_Expense_2.getJSONObject(0);
+			//Object_OtherExpense = Array_Expense_2.getJSONObject(1);
+			//Object.put("OrderExpense", Object_OrderExpense.get("cost"));
+			//Object.put("OtherExpense", Object_OtherExpense.get("cost"));
+			
+			Array.add(Object);
+			Object.clear();
+			i++;
+			//System.out.print(iterator_Income.next());
+			//System.out.print(iterator_Date.next());
+		}
+		
+		//return shopDataRepository.getIncomeData(shopname, branch, start, end);
+		return Array;
+		//return null;
 	}
 	
 }
