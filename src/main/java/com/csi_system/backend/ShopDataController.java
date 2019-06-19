@@ -36,7 +36,21 @@ public class ShopDataController {
 	
 	@GetMapping(path="getLastStock")
 	public @ResponseBody String getLast(@RequestParam String shop,@RequestParam String branch){
-		return shopDataRepository.getLastData(shop, branch);
+		JSONArray stock_array = JSONArray.fromObject(shopDataRepository.getLastData(shop, branch));
+		JSONObject stock_object = new JSONObject();
+		int num, mult;
+		System.out.println(stock_array.toString());
+		
+		for(int i = 0;i < stock_array.size();i++) {
+			stock_object = stock_array.getJSONObject(i);
+			stock_array.remove(i);
+			num = stock_object.getInt("stock");
+			mult = stock_object.getInt("mult");
+			stock_object.put("stock", num/mult);
+			stock_array.add(i, stock_object);
+		}
+		//return shopDataRepository.getLastData(shop, branch);
+		return stock_array.toString();
 	}
 	@GetMapping(path="getStock")
 	public @ResponseBody String getLast(@RequestParam String shop,@RequestParam String branch,@RequestParam String date){
@@ -177,7 +191,11 @@ public class ShopDataController {
 		n.setName(j.getString("name"));
 		n.setDate(j.getString("date"));
 		n.setTime(j.getString("time"));
-		n.setStock(j.getString("stock"));
+		
+		System.out.println(j.getString("stock"));
+		
+		n.setStock(StockDataTrans(j.getString("stock")));
+		//n.setStock(j.getString("stock"));
 		System.out.print(j.getJSONArray("expense"));
 		n.setExpense(j.getString("expense").toString());
 		/*if(j.getString("expense").isEmpty()) {
@@ -312,4 +330,31 @@ public class ShopDataController {
 		return Array;
 	}
 	
+	@GetMapping(path="getTodayData")
+	public @ResponseBody JSONArray getTodayData(@RequestParam String shopname,@RequestParam String branch,
+			@RequestParam String today) {
+		return shopDataRepository.getTodayData(shopname, branch, today);
+	}
+	
+	
+	public String StockDataTrans(String stock) {
+		int num,mult;
+		String output = new String();
+		JSONArray stock_array = JSONArray.fromObject(stock);
+		JSONObject stock_object = new JSONObject();
+		System.out.println(stock_array.toString());
+		for(int i=0;i < stock_array.size();i++) {
+			stock_object = stock_array.getJSONObject(i);
+			stock_array.remove(i);
+			num = stock_object.getInt("stock");
+			mult = stock_object.getInt("mult");
+			stock_object.put("stock", num*mult);
+			num = stock_object.getInt("order");
+			mult = stock_object.getInt("mult");
+			stock_object.put("order", num*mult);
+
+			stock_array.add(i, stock_object);
+		}
+		return stock_array.toString();
+	}
 }

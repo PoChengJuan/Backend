@@ -54,6 +54,8 @@ public interface ShopDataRepository extends CrudRepository<ShopData, Integer>{
 	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 and Date like %?3% order by shopdata.AUTO_INCREMENT desc limit 1",nativeQuery = true)
 	JSONArray getLastDayofLastMonth(String shopname, String branch, String lastmonth);
 	
+	@Query(value="select * from shopdata where shopname like ?1 and branch like ?2 and Date like ?3",nativeQuery = true)
+	JSONArray getTodayData(String Shopname, String branch, String today);
 	@Query(value="INSERT INTO ShopData (AUTO_INCREMENT, shopname, Branch, Date, Stock, Expense, Income) VALUES "
 									   + "(NULL, 		?1,   ?2, 	  ?3,   ?4,    ?5, 		?6);",nativeQuery = true)
 	String addHistoryData(String name,String branch,String date,String stock,int expense,int income);
