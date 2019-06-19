@@ -230,7 +230,6 @@ public class ShopDataController {
 		JSONArray Array_Stock = shopDataRepository.getStockData(shopname, branch, start, end);
 		JSONArray Array_Stock_2 = new JSONArray();
 		JSONObject item_Object = new JSONObject();
-		JSONObject Output_Object = new JSONObject();
 		
 		int i = 0;
 
@@ -246,22 +245,71 @@ public class ShopDataController {
 				Object.put(item_Object.get("title"), item_Object.get("stock"));
 			}
 			item_Object = Array_Stock_2.getJSONObject(i);
-			//Array_Stock_2 = Array_Stock.getJSONArray(i);
-			//Object_OrderExpense = Array_Expense_2.getJSONObject(0);
-			//Object_OtherExpense = Array_Expense_2.getJSONObject(1);
-			//Object.put("OrderExpense", Object_OrderExpense.get("cost"));
-			//Object.put("OtherExpense", Object_OtherExpense.get("cost"));
 			
 			Array.add(Object);
 			Object.clear();
 			i++;
-			//System.out.print(iterator_Income.next());
-			//System.out.print(iterator_Date.next());
 		}
-		
-		//return shopDataRepository.getIncomeData(shopname, branch, start, end);
 		return Array;
-		//return null;
+	}
+	
+	@GetMapping(path="getAchieving")
+	public @ResponseBody JSONArray getAchieving(@RequestParam String shopname,@RequestParam String branch,
+			@RequestParam String month, @RequestParam String lastmonth) {
+		JSONArray Array = new JSONArray();
+		JSONObject Object = new JSONObject();
+		
+		JSONArray Array_Last_Stock = shopDataRepository.getLastDayofLastMonth(shopname, branch, lastmonth);
+		JSONArray Array_Stock = shopDataRepository.getAchieving(shopname, branch, month);
+		JSONArray Array_Stock_2 = new JSONArray();
+		JSONObject item_Object = new JSONObject();
+		
+		int i = 0;
+		int order = 0;
+		int sold = 0;
+		int scrap = 0;
+		int x = 200;
+		
+		System.out.println(Array_Last_Stock);
+		for(i = 0;i < Array_Stock.size();i++) {
+			Array_Stock_2 = Array_Stock.getJSONArray(i);
+			for(int j = 0;j < Array_Stock_2.size();j++) {
+				if(j == i) {
+				System.out.println(Array_Stock_2.getJSONObject(j));}
+				//  get sold
+				item_Object = Array_Stock_2.getJSONObject(j);
+				Object.put("title", item_Object.get("title"));
+				if(i == 0) {
+					order = item_Object.getInt("stock");
+					System.out.println(Array_Last_Stock.getJSONArray(0).getJSONObject(j).getInt("stock"));
+					sold = Array_Last_Stock.getJSONArray(0).getJSONObject(j).getInt("stock") + item_Object.getInt("order") - item_Object.getInt("stock");
+				}else {
+					order = Array.getJSONObject(j).getInt("總進貨");
+					sold = Array.getJSONObject(j).getInt("總銷售");
+
+					order = order + item_Object.getInt("order");
+					
+					//總售量 + (昨天庫存 + 今天進貨 - 今天庫存
+					sold = sold + ( Array_Stock.getJSONArray(i-1).getJSONObject(j).getInt("stock") + item_Object.getInt("order") - item_Object.getInt("stock") );
+
+					Array.remove(j);
+				}
+				
+				scrap = scrap + item_Object.getInt("scrap");
+				
+				Object.put("總進貨", order);
+				Object.put("總銷售", sold);
+				Object.put("報廢", scrap);
+				//  get sold
+				
+				//  get scrap
+				Array.add(j, Object);
+				order = 0;
+				sold = 0;
+				scrap = 0;
+			}
+		}
+		return Array;
 	}
 	
 }
