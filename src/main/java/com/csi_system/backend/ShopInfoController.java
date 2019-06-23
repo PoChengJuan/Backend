@@ -35,7 +35,6 @@ public class ShopInfoController {
 	
 	@GetMapping(path="getBranch")
 	public @ResponseBody String getBranch(@RequestParam String shopname) {
-		StringBuffer output = new StringBuffer();
 		
 		Iterator<?> Branch_Array = shopInfoRepository.getBranch(shopname).iterator();
 		JSONObject Object = new JSONObject();
