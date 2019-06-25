@@ -441,10 +441,40 @@ public class ShopDataController {
 	}
 	@PutMapping(path="UpdateStock/{id}")
 	public @ResponseBody String UpdateStock(@PathVariable int id, @RequestBody String stock) {
-		JSONObject j = JSONObject.fromObject(stock);
+		JSONObject data = JSONObject.fromObject(stock);
 
+		JSONArray newDataArray = data.getJSONArray("stock");
+		JSONObject newDataObject = new JSONObject();
+		JSONArray currentDataArray = new JSONArray();
+		JSONObject currentDataObject = new JSONObject();
 		System.out.println("id:"+id);
 		System.out.println("stock:"+stock);
+		
+		Optional<ShopData> currentShopData = shopDataRepository.findById(id);
+		System.out.println(currentShopData);
+
+		ShopData shopdata = currentShopData.orElse(null);
+		currentDataArray = JSONArray.fromObject(shopdata.getStock());
+		
+		for(int i=0;i < currentDataArray.size();i++) {
+			currentDataObject = currentDataArray.getJSONObject(i);
+			currentDataArray.remove(i);
+			newDataObject = newDataArray.getJSONObject(i);
+//			currentDataObject.put("scrap", newDataObject.getInt("scrap")*newDataObject.getInt("mult"));
+			currentDataObject.put("stock", newDataObject.getInt("stock"));
+			currentDataObject.put("order", newDataObject.getInt("order"));
+
+			currentDataArray.add(i, currentDataObject);
+		}
+		
+		System.out.println(currentDataArray.toString());
+		shopdata.setName(data.getString("name"));
+		shopdata.setTime(data.getString("time"));
+		shopdata.setExpense(data.getString("expense"));
+		shopdata.setIncome(data.getInt("income"));
+		shopdata.setStock(currentDataArray.toString());
+		shopDataRepository.save(shopdata);
+		
 		return "OK";
 	}
 }
