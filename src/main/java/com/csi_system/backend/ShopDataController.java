@@ -96,7 +96,7 @@ public class ShopDataController {
 	public @ResponseBody Date getLastUploadDate(@RequestParam String shop,@RequestParam String branch) {
 		return shopDataRepository.getLastUploadDate(shop, branch);
 	}
-	@GetMapping(path="getRangeData")
+	@GetMapping(path="getIncomeData")
 	public @ResponseBody JSONArray getIncomeData(@RequestParam String shopname,@RequestParam String branch,
 			@RequestParam String start,@RequestParam String end){
 		//System.out.print(shopDataRepository.getIncomeData(shopname, branch, start, end));
@@ -242,35 +242,81 @@ public class ShopDataController {
 		//return shopDataRepository.getStockItem(shop, branch);
 	}
 	
-	@GetMapping(path="getRangeStock")
-	public @ResponseBody JSONArray getRangeStock(@RequestParam String shopname,@RequestParam String branch,
+	@GetMapping(path="getRangeData")
+	public @ResponseBody JSONArray getRangeData(@RequestParam String shopname,@RequestParam String branch,
 			@RequestParam String start,@RequestParam String end) {
 		JSONArray Array = new JSONArray();
-		JSONObject Object = new JSONObject();
+		//Stock
+		JSONArray Array_Sub1 = new JSONArray();
+		JSONObject Object_1 = new JSONObject();
+		//Scrap
+		JSONObject Object_2 = new JSONObject();
+		JSONArray Array_Sub2 = new JSONArray();
+		//Sold
+		JSONArray Array_Sub3 = new JSONArray();
+		JSONObject Object_3 = new JSONObject();
+		//Order
+		JSONArray Array_Sub4 = new JSONArray();
+		JSONObject Object_4 = new JSONObject();
 		
 		JSONArray Array_Stock = shopDataRepository.getStockData(shopname, branch, start, end);
 		JSONArray Array_Stock_2 = new JSONArray();
 		JSONObject item_Object = new JSONObject();
-		
+		String Date = new String();
 		int i = 0;
+		int j = 0;
+		int sold = 0;
+		JSONArray last_Stock = new JSONArray();
 
 		Iterator<?> iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
 
 		while(iterator_Date.hasNext()) {
-			Object.put("key", i+1);
-			Object.put("Date", iterator_Date.next().toString());
+			Object_1.put("key", i+1);
+			Date = iterator_Date.next().toString();
+			Object_1.put("Date", Date);
+			Object_2.put("key", i+1);
+			Object_2.put("Date", Date);
+			Object_3.put("key", i+1);
+			Object_3.put("Date", Date);
+			Object_4.put("key", i+1);
+			Object_4.put("Date", Date);
+			
 			Array_Stock_2 = Array_Stock.getJSONArray(i);
 			Iterator<?> Stock_Data = Array_Stock_2.iterator();
 			while(Stock_Data.hasNext()) {
 				item_Object = (JSONObject) Stock_Data.next();
-				Object.put(item_Object.get("title"), item_Object.get("stock"));
+				Object_1.put(item_Object.get("title"), item_Object.get("stock"));
+				Object_2.put(item_Object.get("title"), item_Object.get("scrap"));
+				Object_4.put(item_Object.get("title"), item_Object.get("order"));
+				if(i != 0 ) {
+					//sold (昨日庫存+今日叫貨) - 今日庫存
+					sold = (last_Stock.getInt(j) + item_Object.getInt("order")) - item_Object.getInt("stock");
+					Object_3.put(item_Object.get("title"), sold);
+					last_Stock.remove(j);
+					last_Stock.add(j, item_Object.getInt("stock"));
+				}else {
+					Object_3.put(item_Object.get("title"), 0);
+					last_Stock.add(j, item_Object.getInt("stock"));
+				}
+				j++;
 			}
+			j = 0;
 			//item_Object = Array_Stock_2.getJSONObject(i);
 			
-			Array.add(Object);
-			Object.clear();
+			Array_Sub1.add(Object_1);
+			Array_Sub2.add(Object_2);
+			Array_Sub3.add(Object_3);
+			Array_Sub4.add(Object_4);
+			Object_1.clear();
+			Object_2.clear();
+			Object_3.clear();
+			Object_4.clear();
 			i++;
 		}
+		Array.add(Array_Sub1);
+		Array.add(Array_Sub2);
+		Array.add(Array_Sub3);
+		Array.add(Array_Sub4);
 		return Array;
 	}
 	
@@ -476,5 +522,118 @@ public class ShopDataController {
 		shopDataRepository.save(shopdata);
 		
 		return "OK";
+	}
+	@GetMapping(path="getStatistics")
+	public @ResponseBody JSONArray getStatistics(@RequestParam String shopname,@RequestParam String branch,
+			@RequestParam String month) {
+		JSONArray Array = new JSONArray();
+		
+		JSONArray Income_Data = JSONArray.fromObject(shopDataRepository.getMonthIncome(shopname, branch, month));
+		JSONArray Array_Income = new JSONArray();
+		JSONObject Object_Income = new JSONObject();
+		
+		JSONArray Expense_Data = JSONArray.fromObject(shopDataRepository.getMonthExpense(shopname, branch, month));
+		JSONArray Array_Expense = new JSONArray();
+		JSONObject Object_Expense = new JSONObject();
+		
+		JSONArray Order_Data = JSONArray.fromObject(shopDataRepository.getMonthsStock(shopname, branch, month));
+		JSONArray Array_Order = new JSONArray();
+		JSONObject Object_Order = new JSONObject();
+
+		JSONArray Scrap_Data = JSONArray.fromObject(shopDataRepository.getMonthsStock(shopname, branch, month));
+		JSONArray Array_Scrap = new JSONArray();
+		JSONObject Object_Scrap = new JSONObject();
+
+		
+		JSONArray Item_Array = new JSONArray();
+		JSONObject Item_Object = new JSONObject();
+		//int i = 0;
+		//*****Income*****
+		int income = 0;
+		Object_Income.put("key", 0);
+		Object_Income.put("title", "月營收");
+		for(int i = 0;i < Income_Data.size();i++) {
+			income = income + Income_Data.getInt(i);
+		}
+		Object_Income.put("income",income);
+		Array_Income.add(Object_Income);
+		//*****Expense*****
+		int num = 0;
+
+		for(int i = 0;i < Expense_Data.size();i++) {
+			Item_Array = Expense_Data.getJSONArray(i);
+			for(int j=0;j < Item_Array.size();j++) {
+				Item_Object = Item_Array.getJSONObject(j);
+				if(i == 0) {
+					Object_Expense.put("key", j);
+					Object_Expense.put("title", Item_Object.get("title"));
+					Object_Expense.put("cost", Item_Object.get("cost"));
+				}else {
+					num = Array_Expense.getJSONObject(j).getInt("cost");
+					Array_Expense.remove(j);
+					num = num + Item_Object.getInt("cost");
+					Object_Expense.put("key", j);
+					Object_Expense.put("title", Item_Object.get("title"));
+					Object_Expense.put("cost", num);
+				}
+				Array_Expense.add(j,Object_Expense);
+				Object_Expense.clear();
+			}
+		}
+		Item_Array.clear();
+		Item_Object.clear();
+		//*****Order*****
+		for(int i = 0;i < Order_Data.size();i++) {
+			Item_Array = Order_Data.getJSONArray(i);
+			for(int j=0;j < Item_Array.size();j++) {
+				Item_Object = Item_Array.getJSONObject(j);
+				if(i == 0) {
+					Object_Order.put("key", j);
+					Object_Order.put("title", Item_Object.get("title"));
+					Object_Order.put("order", Item_Object.get("order"));
+				}else {
+					num = Array_Order.getJSONObject(j).getInt("order");
+					Array_Order.remove(j);
+					num = num + Item_Object.getInt("order");
+					Object_Order.put("key", j);
+					Object_Order.put("title", Item_Object.get("title"));
+					Object_Order.put("order", num);
+				}
+				Array_Order.add(j,Object_Order);
+				Object_Order.clear();
+			}
+		}
+		Item_Array.clear();
+		Item_Object.clear();
+		//*****Scrap*****
+		for(int i = 0;i < Scrap_Data.size();i++) {
+			Item_Array = Scrap_Data.getJSONArray(i);
+			for(int j=0;j < Item_Array.size();j++) {
+				Item_Object = Item_Array.getJSONObject(j);
+				if(i == 0) {
+					Object_Scrap.put("key", j);
+					Object_Scrap.put("title", Item_Object.get("title"));
+					Object_Scrap.put("scrap", Item_Object.get("scrap"));
+				}else {
+					num = Array_Scrap.getJSONObject(j).getInt("scrap");
+					Array_Scrap.remove(j);
+					num = num + Item_Object.getInt("scrap");
+					Object_Scrap.put("key", j);
+					Object_Scrap.put("title", Item_Object.get("title"));
+					Object_Scrap.put("scrap", num);
+				}
+				Array_Scrap.add(j,Object_Scrap);
+				Object_Scrap.clear();
+			}
+		}
+		Item_Array.clear();
+		Item_Object.clear();
+		
+		
+		Array.add(Array_Income);
+		Array.add(Array_Expense);
+		Array.add(Array_Order);
+		Array.add(Array_Scrap);
+		return Array;
 	}
 }

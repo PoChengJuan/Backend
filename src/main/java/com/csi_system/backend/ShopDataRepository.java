@@ -62,10 +62,12 @@ public interface ShopDataRepository extends CrudRepository<ShopData, Integer>{
 	JSONArray getMonthIncome(String shopname, String branch, String month);
 	
 	/*********getMonthExpense********************************************************************************************/
-	//JSONArray getMonthExpense(String shopname, String branch, String month);
+	@Query(value="select expense from shopdata where shopname like ?1 and branch like ?2 and Date like %?3%",nativeQuery = true)
+	JSONArray getMonthExpense(String shopname, String branch, String month);
 	
-	/*********getMonthOrder********************************************************************************************/
-	//JSONArray getMonthOrder(String shopname, String branch, String month);
+	/*********getMonthsStock********************************************************************************************/
+	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 and Date like %?3%",nativeQuery = true)
+	JSONArray getMonthsStock(String shopname, String branch, String month);
 	
 	/*********getMonthScrap********************************************************************************************/
 	//JSONArray getMonthScrap(String shopname, String branch, String month);
