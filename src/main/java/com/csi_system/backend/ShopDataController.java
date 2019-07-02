@@ -289,8 +289,8 @@ public class ShopDataController {
 				Object_2.put(item_Object.get("title"), item_Object.get("scrap"));
 				Object_4.put(item_Object.get("title"), item_Object.get("order"));
 				if(i != 0 ) {
-					//sold (昨日庫存+今日叫貨) - 今日庫存
-					sold = (last_Stock.getInt(j) + item_Object.getInt("order")) - item_Object.getInt("stock");
+					//sold (昨日庫存+今日叫貨) - 今日庫存 - 今日報廢
+					sold = (last_Stock.getInt(j) + item_Object.getInt("order")) - item_Object.getInt("stock") - item_Object.getInt("scrap");
 					Object_3.put(item_Object.get("title"), sold);
 					last_Stock.remove(j);
 					last_Stock.add(j, item_Object.getInt("stock"));
