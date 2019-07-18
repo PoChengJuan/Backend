@@ -14,6 +14,9 @@ public interface ShopDataRepository extends CrudRepository<ShopData, Integer>{
 	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 order by shopdata.AUTO_INCREMENT desc limit 1",nativeQuery = true)
 	String getLastData(String shopname, String branch);
 	
+	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 order by shopdata.AUTO_INCREMENT desc limit 2",nativeQuery = true)
+	JSONArray getLastDataForPut(String shopname, String branch);
+	
 	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 and date like ?3",nativeQuery = true)
 	String getData(String shopname, String branch, String date);
 	

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,15 +40,15 @@ public class ShopDataController {
 	public @ResponseBody String getLast(@RequestParam String shop,@RequestParam String branch){
 		JSONArray stock_array = JSONArray.fromObject(shopDataRepository.getLastData(shop, branch));
 		JSONObject stock_object = new JSONObject();
-		int num, mult;
+		int num;
 		System.out.println(stock_array.toString());
 		
 		for(int i = 0;i < stock_array.size();i++) {
 			stock_object = stock_array.getJSONObject(i);
 			stock_array.remove(i);
 			num = stock_object.getInt("stock");
-			mult = stock_object.getInt("mult");
-			stock_object.put("stock", num/mult);
+			//mult = stock_object.getInt("mult");
+			stock_object.put("stock", num);
 			stock_array.add(i, stock_object);
 		}
 		return shopDataRepository.getLastData(shop, branch);
@@ -198,7 +197,8 @@ public class ShopDataController {
 		System.out.println(j.getString("stock"));
 		
 		//n.setStock(StockDataTrans(j.getString("stock")));
-		n.setStock(j.getString("stock"));
+		
+		n.setStock(calcuSold(j.getString("shopname"),j.getString("branch"),j.getJSONArray("stock")));
 		System.out.print(j.getJSONArray("expense"));
 		n.setExpense(j.getString("expense").toString());
 		/*if(j.getString("expense").isEmpty()) {
@@ -214,6 +214,33 @@ public class ShopDataController {
 		shopDataRepository.save(n);
 		return "OK";
 	}
+	private String calcuSold(String shop, String branch, JSONArray jsonArray) {
+		// TODO Auto-generated method stub
+		JSONArray last_array = JSONArray.fromObject(shopDataRepository.getLastData(shop, branch));
+		int i = 0;
+		int stock = 0;
+		int order = 0;
+		int sold = 0;
+		int last_stock = 0;
+		System.out.println(last_array.toString());
+		System.out.println(jsonArray.toString());
+		
+		for(i = 0;i < jsonArray.size();i++) {
+			stock = 0;
+			order = 0;
+			sold = 0;
+			last_stock = 0;
+			stock = jsonArray.getJSONObject(i).getInt("stock");
+			order = jsonArray.getJSONObject(i).getInt("order");
+			last_stock = last_array.getJSONObject(i).getInt("stock");
+			sold = (last_stock + order) - stock;
+			jsonArray.getJSONObject(i).remove("sold");
+			jsonArray.getJSONObject(i).accumulate("sold", sold);
+		}
+		System.out.println(jsonArray.toString());
+		return jsonArray.toString();
+	}
+
 	@GetMapping(path="getStockItem")
 	public @ResponseBody JSONArray getStockItem(@RequestParam String shopname,@RequestParam String branch) {
 		JSONArray Array = new JSONArray();
@@ -336,33 +363,39 @@ public class ShopDataController {
 		int order = 0;
 		int sold = 0;
 		int scrap = 0;
-		
+		int laststock = 0;
+		int allstock = 0;
 		
 		for(i = 0;i < Array_Stock.size();i++) {
 			Array_Stock_2 = Array_Stock.getJSONArray(i);
 			for(j = 0;j < Array_Stock_2.size();j++) {
 				if(i == 0) {
-					order = Array_Last_Stock.getJSONArray(0).getJSONObject(j).getInt("stock");
+					laststock = Array_Last_Stock.getJSONArray(0).getJSONObject(j).getInt("stock");
+					allstock = laststock;
 				}else {
+					laststock = Array.getJSONObject(j).getInt("上月庫存");
+					allstock = Array.getJSONObject(j).getInt("總進貨") + laststock;
 					order = Array.getJSONObject(j).getInt("總進貨");
 					scrap = Array.getJSONObject(j).getInt("報廢");
 					Array.remove(j);
 				}
 				item_Object = Array_Stock_2.getJSONObject(j);
 				Object.put("title", item_Object.get("title"));
+				allstock = allstock + item_Object.getInt("order");
 				order = order + item_Object.getInt("order");
 
 				scrap = scrap + item_Object.getInt("scrap");
 
 				if(i == Array_Stock.size()-1) {
-					//總銷售 = order(上個月庫存+這個月叫貨) - 月底庫存 - 整個月總報廢
-					sold = order - item_Object.getInt("stock") - scrap;
+					//總銷售 = allstock(上個月庫存+這個月叫貨) - 月底庫存 - 整個月總報廢
+					sold = allstock - item_Object.getInt("stock") - scrap;
 				}
-				
+				Object.put("上月庫存", laststock);
 				Object.put("總進貨", order);
 				Object.put("總銷售", sold);
 				Object.put("報廢", scrap);
 				Array.add(j, Object);
+				//laststock = 0;
 				order = 0;
 				sold = 0;
 				scrap = 0;
@@ -486,15 +519,26 @@ public class ShopDataController {
 		return "OK";
 	}
 	@PutMapping(path="UpdateStock/{id}")
-	public @ResponseBody String UpdateStock(@PathVariable int id, @RequestBody String stock) {
-		JSONObject data = JSONObject.fromObject(stock);
+	public @ResponseBody String UpdateStock(@PathVariable int id, @RequestBody String stock_data) {
+		JSONObject data = JSONObject.fromObject(stock_data);
 
 		JSONArray newDataArray = data.getJSONArray("stock");
 		JSONObject newDataObject = new JSONObject();
 		JSONArray currentDataArray = new JSONArray();
 		JSONObject currentDataObject = new JSONObject();
+		
+		JSONArray last_array1 = new JSONArray();
+		JSONArray last_array2 = new JSONArray();
+		int stock,order,sold,scrap,last_stock;
+		int old_stock,old_order,old_sold,old_scrap;
+		int scrap_flag = 0;
+		if(data.getString("type").equals("scrap")) {
+			scrap_flag = 1;
+		}else {
+			scrap_flag = 0;
+		}
 		System.out.println("id:"+id);
-		System.out.println("stock:"+stock);
+		System.out.println("stock:"+stock_data);
 		
 		Optional<ShopData> currentShopData = shopDataRepository.findById(id);
 		System.out.println(currentShopData);
@@ -502,22 +546,60 @@ public class ShopDataController {
 		ShopData shopdata = currentShopData.orElse(null);
 		currentDataArray = JSONArray.fromObject(shopdata.getStock());
 		
+		last_array1 = shopDataRepository.getLastDataForPut(shopdata.getShopname(), shopdata.getBranch());
+		last_array2 = last_array1.getJSONArray(1);
 		for(int i=0;i < currentDataArray.size();i++) {
+			stock = 0;
+			order = 0;
+			sold = 0;
+			scrap = 0;
+			last_stock = 0;
+			old_stock = 0;
+			old_order = 0;
+			old_sold = 0;
+			old_scrap = 0;
+			
 			currentDataObject = currentDataArray.getJSONObject(i);
+			old_stock = currentDataObject.getInt("stock");
+			old_order = currentDataObject.getInt("order");
+			old_sold = currentDataObject.getInt("sold");
+			old_scrap = currentDataObject.getInt("scrap");
 			currentDataArray.remove(i);
 			newDataObject = newDataArray.getJSONObject(i);
 //			currentDataObject.put("scrap", newDataObject.getInt("scrap")*newDataObject.getInt("mult"));
-			currentDataObject.put("stock", newDataObject.getInt("stock"));
-			currentDataObject.put("order", newDataObject.getInt("order"));
-
+			
+			
+			scrap = newDataObject.getInt("scrap");
+			if(scrap_flag == 0) {//update stock
+				last_stock = last_array2.getJSONObject(i).getInt("stock");
+				last_stock = last_stock - currentDataObject.getInt("scrap");
+				//stock = newDataObject.getInt("stock") - currentDataObject.getInt("scrap");
+				stock = newDataObject.getInt("stock");
+				order = newDataObject.getInt("order");
+				sold = (last_stock + order) - stock;
+				currentDataObject.put("stock", stock);
+				currentDataObject.put("order", order);
+				currentDataObject.put("scrap", old_scrap);
+			}else {//update scrap
+				last_stock = last_array2.getJSONObject(i).getInt("stock");
+				old_stock = old_stock + old_scrap;
+				old_stock = old_stock - scrap;
+				sold = (last_stock + old_order) - old_stock;
+				currentDataObject.put("stock", old_stock);
+				currentDataObject.put("order", old_order);
+				currentDataObject.put("scrap", scrap);
+			}
+			currentDataObject.put("sold", sold);
 			currentDataArray.add(i, currentDataObject);
 		}
 		
 		System.out.println(currentDataArray.toString());
 		shopdata.setName(data.getString("name"));
 		shopdata.setTime(data.getString("time"));
-		shopdata.setExpense(data.getString("expense"));
-		shopdata.setIncome(data.getInt("income"));
+		if(scrap_flag == 0) {
+			shopdata.setExpense(data.getString("expense"));
+			shopdata.setIncome(data.getInt("income"));
+		}
 		shopdata.setStock(currentDataArray.toString());
 		shopDataRepository.save(shopdata);
 		
@@ -635,5 +717,37 @@ public class ShopDataController {
 		Array.add(Array_Order);
 		Array.add(Array_Scrap);
 		return Array;
+	}
+	@GetMapping(path="getWarning")
+	public @ResponseBody String getWarning(@RequestParam String shop,@RequestParam String branch,@RequestParam String date,
+			@RequestParam String page) {
+		JSONArray Data_Array = JSONArray.fromObject(shopDataRepository.getData(shop, branch, date));
+		JSONArray Info_Array = JSONArray.fromObject(shopInfoRepository.getStockItem(shop, branch));
+		
+		JSONArray Array = new JSONArray();
+		JSONObject Object = new JSONObject();
+		int x = 0;
+		//JSONObject Data_Object = Data_Array.getJSONObject(0);
+		//System.out.println(Data_Array.toString());
+		if(page.equals("Info")) {
+			for(int i=0;i < Data_Array.size();i++) {
+				Object.clear();
+				if(Data_Array.getJSONObject(i).getInt("stock") <= Info_Array.getJSONObject(i).getInt("warning")) {
+					Object.put("key", x++);
+					Object.put("title", Data_Array.getJSONObject(i).get("title"));
+					Array.add(Object);
+				}
+				
+			}
+			if(x == 0) {
+				return "OK";
+			}else {
+				return Array.toString();
+			}
+		}else if(page.equals("StockList")) {
+			return "OK";
+		}else {
+			return "OK";
+		}
 	}
 }
