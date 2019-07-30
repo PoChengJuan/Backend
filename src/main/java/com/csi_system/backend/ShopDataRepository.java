@@ -35,6 +35,9 @@ public interface ShopDataRepository extends CrudRepository<ShopData, Integer>{
 	@Query(value="select date from shopdata where shopname like ?1 and branch like ?2 order by shopdata.AUTO_INCREMENT desc limit 1",nativeQuery = true)
 	Date getLastUploadDate(String shopname, String branch);
 	
+	@Query(value="select stock from shopdata where shopname like ?1 and branch like ?2 order by shopdata.AUTO_INCREMENT desc limit 1",nativeQuery = true)
+	String getLastUploadData(String shopname, String branch);
+	
 	@Query(value="SELECT Date FROM ShopData WHERE shopname LIKE ?1 AND Branch LIKE ?2 AND Date BETWEEN ?3 AND ?4",nativeQuery = true)
 	Iterable<String> getRangeDate(String shopname, String branch, String startdate, String enddate);
 	

@@ -218,10 +218,10 @@ public class ShopDataController {
 		// TODO Auto-generated method stub
 		JSONArray last_array = JSONArray.fromObject(shopDataRepository.getLastData(shop, branch));
 		int i = 0;
-		int stock = 0;
-		int order = 0;
-		int sold = 0;
-		int last_stock = 0;
+		double stock = 0;
+		double order = 0;
+		double sold = 0;
+		double last_stock = 0;
 		System.out.println(last_array.toString());
 		System.out.println(jsonArray.toString());
 		
@@ -230,9 +230,9 @@ public class ShopDataController {
 			order = 0;
 			sold = 0;
 			last_stock = 0;
-			stock = jsonArray.getJSONObject(i).getInt("stock");
-			order = jsonArray.getJSONObject(i).getInt("order");
-			last_stock = last_array.getJSONObject(i).getInt("stock");
+			stock = jsonArray.getJSONObject(i).getDouble("stock");
+			order = jsonArray.getJSONObject(i).getDouble("order");
+			last_stock = last_array.getJSONObject(i).getDouble("stock");
 			sold = (last_stock + order) - stock;
 			jsonArray.getJSONObject(i).remove("sold");
 			jsonArray.getJSONObject(i).accumulate("sold", sold);
@@ -291,9 +291,9 @@ public class ShopDataController {
 		JSONObject item_Object = new JSONObject();
 		String Date = new String();
 		int i = 0;
-		int j = 0;
-		int sold = 0;
-		JSONArray last_Stock = new JSONArray();
+		//int j = 0;
+		//double sold = 0;
+		//JSONArray last_Stock = new JSONArray();
 
 		Iterator<?> iterator_Date = shopDataRepository.getRangeDate(shopname, branch, start, end).iterator();
 
@@ -314,20 +314,22 @@ public class ShopDataController {
 				item_Object = (JSONObject) Stock_Data.next();
 				Object_1.put(item_Object.get("title"), item_Object.get("stock"));
 				Object_2.put(item_Object.get("title"), item_Object.get("scrap"));
+				Object_3.put(item_Object.get("title"), item_Object.get("sold"));
 				Object_4.put(item_Object.get("title"), item_Object.get("order"));
-				if(i != 0 ) {
+				/*if(i != 0 ) {
 					//sold (昨日庫存+今日叫貨) - 今日庫存 - 今日報廢
-					sold = (last_Stock.getInt(j) + item_Object.getInt("order")) - item_Object.getInt("stock") - item_Object.getInt("scrap");
+					//sold = (last_Stock.getDouble(j) + item_Object.getDouble("order")) - item_Object.getDouble("stock") - item_Object.getDouble("scrap");
+					sold = item_Object.getDouble("sold");
 					Object_3.put(item_Object.get("title"), sold);
 					last_Stock.remove(j);
-					last_Stock.add(j, item_Object.getInt("stock"));
+					last_Stock.add(j, item_Object.getDouble("stock"));
 				}else {
 					Object_3.put(item_Object.get("title"), 0);
-					last_Stock.add(j, item_Object.getInt("stock"));
+					last_Stock.add(j, item_Object.getDouble("stock"));
 				}
-				j++;
+				j++;*/
 			}
-			j = 0;
+			//j = 0;
 			//item_Object = Array_Stock_2.getJSONObject(i);
 			
 			Array_Sub1.add(Object_1);
@@ -360,35 +362,40 @@ public class ShopDataController {
 		
 		int i = 0;
 		int j= 0;
-		int order = 0;
-		int sold = 0;
-		int scrap = 0;
-		int laststock = 0;
-		int allstock = 0;
+		double order = 0;
+		double sold = 0;
+		double scrap = 0;
+		double laststock = 0;
+		double allstock = 0;
 		
 		for(i = 0;i < Array_Stock.size();i++) {
 			Array_Stock_2 = Array_Stock.getJSONArray(i);
 			for(j = 0;j < Array_Stock_2.size();j++) {
 				if(i == 0) {
-					laststock = Array_Last_Stock.getJSONArray(0).getJSONObject(j).getInt("stock");
+					laststock = Array_Last_Stock.getJSONArray(0).getJSONObject(j).getDouble("stock");
 					allstock = laststock;
 				}else {
-					laststock = Array.getJSONObject(j).getInt("上月庫存");
-					allstock = Array.getJSONObject(j).getInt("總進貨") + laststock;
-					order = Array.getJSONObject(j).getInt("總進貨");
-					scrap = Array.getJSONObject(j).getInt("報廢");
-					Array.remove(j);
+					if(Array.size() <= j) {
+						laststock = Array_Stock_2.getJSONObject(j).getDouble("stock");
+						allstock = laststock;
+					}else {
+						laststock = Array.getJSONObject(j).getDouble("上月庫存");
+						allstock = Array.getJSONObject(j).getDouble("總進貨") + laststock;
+						order = Array.getJSONObject(j).getDouble("總進貨");
+						scrap = Array.getJSONObject(j).getDouble("報廢");
+						Array.remove(j);
+					}
 				}
 				item_Object = Array_Stock_2.getJSONObject(j);
 				Object.put("title", item_Object.get("title"));
-				allstock = allstock + item_Object.getInt("order");
-				order = order + item_Object.getInt("order");
+				allstock = allstock + item_Object.getDouble("order");
+				order = order + item_Object.getDouble("order");
 
-				scrap = scrap + item_Object.getInt("scrap");
+				scrap = scrap + item_Object.getDouble("scrap");
 
 				if(i == Array_Stock.size()-1) {
 					//總銷售 = allstock(上個月庫存+這個月叫貨) - 月底庫存 - 整個月總報廢
-					sold = allstock - item_Object.getInt("stock") - scrap;
+					sold = allstock - item_Object.getDouble("stock") - scrap;
 				}
 				Object.put("上月庫存", laststock);
 				Object.put("總進貨", order);
@@ -529,8 +536,8 @@ public class ShopDataController {
 		
 		JSONArray last_array1 = new JSONArray();
 		JSONArray last_array2 = new JSONArray();
-		int stock,order,sold,scrap,last_stock;
-		int old_stock,old_order,old_sold,old_scrap;
+		double stock,order,sold,scrap,last_stock;
+		double old_stock,old_order,old_sold,old_scrap;
 		int scrap_flag = 0;
 		if(data.getString("type").equals("scrap")) {
 			scrap_flag = 1;
@@ -560,28 +567,28 @@ public class ShopDataController {
 			old_scrap = 0;
 			
 			currentDataObject = currentDataArray.getJSONObject(i);
-			old_stock = currentDataObject.getInt("stock");
-			old_order = currentDataObject.getInt("order");
-			old_sold = currentDataObject.getInt("sold");
-			old_scrap = currentDataObject.getInt("scrap");
+			old_stock = currentDataObject.getDouble("stock");
+			old_order = currentDataObject.getDouble("order");
+			old_sold = currentDataObject.getDouble("sold");
+			old_scrap = currentDataObject.getDouble("scrap");
 			currentDataArray.remove(i);
 			newDataObject = newDataArray.getJSONObject(i);
 //			currentDataObject.put("scrap", newDataObject.getInt("scrap")*newDataObject.getInt("mult"));
 			
 			
-			scrap = newDataObject.getInt("scrap");
+			scrap = newDataObject.getDouble("scrap");
 			if(scrap_flag == 0) {//update stock
-				last_stock = last_array2.getJSONObject(i).getInt("stock");
-				last_stock = last_stock - currentDataObject.getInt("scrap");
+				last_stock = last_array2.getJSONObject(i).getDouble("stock");
+				last_stock = last_stock - currentDataObject.getDouble("scrap");
 				//stock = newDataObject.getInt("stock") - currentDataObject.getInt("scrap");
-				stock = newDataObject.getInt("stock");
-				order = newDataObject.getInt("order");
+				stock = newDataObject.getDouble("stock");
+				order = newDataObject.getDouble("order");
 				sold = (last_stock + order) - stock;
 				currentDataObject.put("stock", stock);
 				currentDataObject.put("order", order);
 				currentDataObject.put("scrap", old_scrap);
 			}else {//update scrap
-				last_stock = last_array2.getJSONObject(i).getInt("stock");
+				last_stock = last_array2.getJSONObject(i).getDouble("stock");
 				old_stock = old_stock + old_scrap;
 				old_stock = old_stock - scrap;
 				sold = (last_stock + old_order) - old_stock;
@@ -640,7 +647,7 @@ public class ShopDataController {
 		Object_Income.put("income",income);
 		Array_Income.add(Object_Income);
 		//*****Expense*****
-		int num = 0;
+		double num = 0;
 
 		for(int i = 0;i < Expense_Data.size();i++) {
 			Item_Array = Expense_Data.getJSONArray(i);
@@ -674,12 +681,18 @@ public class ShopDataController {
 					Object_Order.put("title", Item_Object.get("title"));
 					Object_Order.put("order", Item_Object.get("order"));
 				}else {
-					num = Array_Order.getJSONObject(j).getInt("order");
-					Array_Order.remove(j);
-					num = num + Item_Object.getInt("order");
-					Object_Order.put("key", j);
-					Object_Order.put("title", Item_Object.get("title"));
-					Object_Order.put("order", num);
+					if(Array_Order.size() <= j) {	//new item
+						Object_Order.put("key", j);
+						Object_Order.put("title", Item_Object.get("title"));
+						Object_Order.put("order", Item_Object.get("order"));
+					}else {
+						num = Array_Order.getJSONObject(j).getDouble("order");
+						Array_Order.remove(j);
+						num = num + Item_Object.getDouble("order");
+						Object_Order.put("key", j);
+						Object_Order.put("title", Item_Object.get("title"));
+						Object_Order.put("order", num);
+					}
 				}
 				Array_Order.add(j,Object_Order);
 				Object_Order.clear();
@@ -697,12 +710,18 @@ public class ShopDataController {
 					Object_Scrap.put("title", Item_Object.get("title"));
 					Object_Scrap.put("scrap", Item_Object.get("scrap"));
 				}else {
-					num = Array_Scrap.getJSONObject(j).getInt("scrap");
-					Array_Scrap.remove(j);
-					num = num + Item_Object.getInt("scrap");
-					Object_Scrap.put("key", j);
-					Object_Scrap.put("title", Item_Object.get("title"));
-					Object_Scrap.put("scrap", num);
+					if(Array_Scrap.size() <= j) {	//new item
+						Object_Scrap.put("key", j);
+						Object_Scrap.put("title", Item_Object.get("title"));
+						Object_Scrap.put("scrap", Item_Object.get("scrap"));
+					}else {
+						num = Array_Scrap.getJSONObject(j).getDouble("scrap");
+						Array_Scrap.remove(j);
+						num = num + Item_Object.getDouble("scrap");
+						Object_Scrap.put("key", j);
+						Object_Scrap.put("title", Item_Object.get("title"));
+						Object_Scrap.put("scrap", num);
+					}
 				}
 				Array_Scrap.add(j,Object_Scrap);
 				Object_Scrap.clear();
@@ -721,7 +740,8 @@ public class ShopDataController {
 	@GetMapping(path="getWarning")
 	public @ResponseBody String getWarning(@RequestParam String shop,@RequestParam String branch,@RequestParam String date,
 			@RequestParam String page) {
-		JSONArray Data_Array = JSONArray.fromObject(shopDataRepository.getData(shop, branch, date));
+		//JSONArray Data_Array = JSONArray.fromObject(shopDataRepository.getData(shop, branch, date));
+		JSONArray Data_Array = JSONArray.fromObject(shopDataRepository.getLastUploadData(shop, branch));
 		JSONArray Info_Array = JSONArray.fromObject(shopInfoRepository.getStockItem(shop, branch));
 		
 		JSONArray Array = new JSONArray();
@@ -732,12 +752,13 @@ public class ShopDataController {
 		if(page.equals("Info")) {
 			for(int i=0;i < Data_Array.size();i++) {
 				Object.clear();
-				if(Data_Array.getJSONObject(i).getInt("stock") <= Info_Array.getJSONObject(i).getInt("warning")) {
-					Object.put("key", x++);
-					Object.put("title", Data_Array.getJSONObject(i).get("title"));
-					Array.add(Object);
+				if(Info_Array.getJSONObject(i).getDouble("warning") != 0) {
+					if(Data_Array.getJSONObject(i).getDouble("stock") <= Info_Array.getJSONObject(i).getDouble("warning")) {
+						Object.put("key", x++);
+						Object.put("title", Data_Array.getJSONObject(i).get("title"));
+						Array.add(Object);
+					}
 				}
-				
 			}
 			if(x == 0) {
 				return "OK";
