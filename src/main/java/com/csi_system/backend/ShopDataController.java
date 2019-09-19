@@ -198,7 +198,7 @@ public class ShopDataController {
 		
 		//n.setStock(StockDataTrans(j.getString("stock")));
 		
-		n.setStock(calcuSold(j.getString("shopname"),j.getString("branch"),j.getJSONArray("stock")));
+		n.setStock(calcuSold(j.getString("shopname"),j.getString("branch"),j.getJSONArray("stock"),j.getString("type")));
 		System.out.print(j.getJSONArray("expense"));
 		n.setExpense(j.getString("expense").toString());
 		/*if(j.getString("expense").isEmpty()) {
@@ -214,17 +214,47 @@ public class ShopDataController {
 		shopDataRepository.save(n);
 		return "OK";
 	}
-	private String calcuSold(String shop, String branch, JSONArray jsonArray) {
+	private String calcuSold(String shop, String branch, JSONArray jsonArray, String type) {
 		// TODO Auto-generated method stub
 		JSONArray last_array = JSONArray.fromObject(shopDataRepository.getLastData(shop, branch));
 		int i = 0;
 		double stock = 0;
 		double order = 0;
 		double sold = 0;
+		double scrap = 0;
 		double last_stock = 0;
 		System.out.println(last_array.toString());
 		System.out.println(jsonArray.toString());
 		
+		if(type.equals("stock")) {
+			for(i = 0;i < jsonArray.size();i++) {
+				stock = 0;
+				order = 0;
+				sold = 0;
+				last_stock = 0;
+				stock = jsonArray.getJSONObject(i).getDouble("stock");
+				order = jsonArray.getJSONObject(i).getDouble("order");
+				last_stock = last_array.getJSONObject(i).getDouble("stock");
+				sold = (last_stock + order) - stock;
+				jsonArray.getJSONObject(i).remove("sold");
+				jsonArray.getJSONObject(i).accumulate("sold", sold);
+			}
+		}else if(type.equals("scrap")) {
+			for(i = 0;i < jsonArray.size();i++) {
+				stock = 0;
+				order = 0;
+				sold = 0;
+				scrap = 0;
+				last_stock = 0;
+				stock = jsonArray.getJSONObject(i).getDouble("stock");
+				scrap = jsonArray.getJSONObject(i).getDouble("scrap");
+				//order = jsonArray.getJSONObject(i).getDouble("order");
+				//last_stock = last_array.getJSONObject(i).getDouble("stock");
+				stock = stock - scrap;
+				jsonArray.getJSONObject(i).remove("stock");
+				jsonArray.getJSONObject(i).accumulate("stock", stock);
+			}
+		}
 		for(i = 0;i < jsonArray.size();i++) {
 			stock = 0;
 			order = 0;
@@ -537,7 +567,7 @@ public class ShopDataController {
 		JSONArray last_array1 = new JSONArray();
 		JSONArray last_array2 = new JSONArray();
 		double stock,order,sold,scrap,last_stock;
-		double old_stock,old_order,old_sold,old_scrap;
+		double old_stock,old_order/*,old_sold*/,old_scrap;
 		int scrap_flag = 0;
 		if(data.getString("type").equals("scrap")) {
 			scrap_flag = 1;
@@ -563,13 +593,13 @@ public class ShopDataController {
 			last_stock = 0;
 			old_stock = 0;
 			old_order = 0;
-			old_sold = 0;
+			//old_sold = 0;
 			old_scrap = 0;
 			
 			currentDataObject = currentDataArray.getJSONObject(i);
 			old_stock = currentDataObject.getDouble("stock");
 			old_order = currentDataObject.getDouble("order");
-			old_sold = currentDataObject.getDouble("sold");
+			//old_sold = currentDataObject.getDouble("sold");
 			old_scrap = currentDataObject.getDouble("scrap");
 			currentDataArray.remove(i);
 			newDataObject = newDataArray.getJSONObject(i);
